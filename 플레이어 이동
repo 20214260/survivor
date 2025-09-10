@@ -1,0 +1,32 @@
+using UnityEngine;
+using UnityEngine.InputSystem; // Input System 사용
+
+public class PlayerController : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+
+    private Rigidbody2D rb;
+    private PlayerControls controls;
+    private Vector2 moveInput;
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        if (rb == null) rb = gameObject.AddComponent<Rigidbody2D>();
+
+        rb.gravityScale = 0f;      // 중력 제거 (탑다운 2D니까)
+        rb.freezeRotation = true;  // 충돌해도 회전하지 않도록 고정
+
+        controls = new PlayerControls();
+        controls.Player.Move.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
+        controls.Player.Move.canceled += _ => moveInput = Vector2.zero;
+    }
+
+    void OnEnable() => controls.Enable();
+    void OnDisable() => controls.Disable();
+
+    void FixedUpdate()
+    {
+        rb.velocity = moveInput.normalized * moveSpeed;
+    }
+}
