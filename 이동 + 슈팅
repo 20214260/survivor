@@ -1,0 +1,53 @@
+using UnityEngine;
+using UnityEngine.InputSystem; // Input System 사용
+
+public class PlayerController : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    public float projectileSpeed = 10f;
+
+    public GameObject projectilePrefab;
+    private Rigidbody2D rb;
+    private PlayerControls controls;
+    private Vector2 moveInput;
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        if (rb == null) rb = gameObject.AddComponent<Rigidbody2D>();
+
+        rb.gravityScale = 0f;      // 중력 제거 (탑다운 2D니까)
+        rb.freezeRotation = true;  // 충돌해도 회전하지 않도록 고정
+
+        controls = new PlayerControls();
+        controls.Player.Move.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
+        controls.Player.Move.canceled += _ => moveInput = Vector2.zero;
+        controls.Player.Fire.performed += _ => Fire();
+    }
+
+    void Fire()
+    {
+        if (projectilePrefab == null) return;
+
+        // 플레이어 위치에서 총알 생성
+        GameObject proj = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+
+        // 총알 방향 = 현재 moveInput 방향, 없으면 위로
+        Vector2 dir = moveInput != Vector2.zero ? moveInput.normalized : Vector2.up;
+
+        // Rigidbody2D로 이동
+        Rigidbody2D prb = proj.GetComponent<Rigidbody2D>();
+        prb.velocity = dir * projectileSpeed;
+
+        // 3초 후 자동 삭제 (메모리 관리)
+        Destroy(proj, 3f);
+    }
+
+    void OnEnable() => controls.Enable();
+    void OnDisable() => controls.Disable();
+
+    void FixedUpdate()
+    {
+        rb.velocity = moveInput.normalized * moveSpeed;
+    }
+}
