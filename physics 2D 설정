@@ -1,0 +1,25 @@
+using UnityEngine;
+
+[DefaultExecutionOrder(-1000)] // 아주 이른 실행
+public class PhysicsBootstrap : MonoBehaviour
+{
+    void Awake()
+    {
+        int player = LayerMask.NameToLayer("Player");
+        int enemy = LayerMask.NameToLayer("Enemy");
+        int projectile = LayerMask.NameToLayer("Projectile");
+        int pickup = LayerMask.NameToLayer("Pickup");
+
+        // 끌 것들
+        Physics2D.IgnoreLayerCollision(player, projectile, true);
+        Physics2D.IgnoreLayerCollision(enemy, enemy, true);
+        Physics2D.IgnoreLayerCollision(projectile, projectile, true);
+        Physics2D.IgnoreLayerCollision(pickup, enemy, true);
+        Physics2D.IgnoreLayerCollision(pickup, projectile, true);
+
+        // 켤 것들
+        Physics2D.IgnoreLayerCollision(player, enemy, false);
+        Physics2D.IgnoreLayerCollision(player, pickup, false);
+        Physics2D.IgnoreLayerCollision(enemy, projectile, false);
+    }
+}
