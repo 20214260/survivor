@@ -1,0 +1,32 @@
+using UnityEngine;
+
+public class EnemyController : MonoBehaviour
+{
+    public float moveSpeed = 2f;   // 적 이동 속도(인스펙터에서 조절)
+    private Transform player;      // 플레이어의 위치(Transform)만 필요해서 Transform으로 저장
+    private Rigidbody2D rb;        // 적 자신의 물리 바디
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>(); // 이 스크립트가 붙은 오브젝트(적)에서 Rigidbody2D를 찾아 캐싱
+    }
+
+    void Start()
+    {
+        // 씬에서 Tag가 "Player"인 오브젝트를 1회 검색 → Transform만 보관
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+            player = playerObj.transform;
+    }
+
+    void FixedUpdate()
+    {
+        if (player == null) return; // 플레이어가 없거나(삭제됨) 아직 못 찾았으면 그냥 대기
+
+        // '플레이어 위치 - 내 위치' = 플레이어를 향하는 방향 벡터
+        Vector2 direction = (player.position - transform.position).normalized;
+
+        // 물리 프레임마다 속도를 갱신해서 추격
+        rb.velocity = direction * moveSpeed;
+    }
+}
