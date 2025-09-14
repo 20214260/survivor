@@ -1,0 +1,16 @@
+using UnityEngine;
+
+public class ProjectileHit : MonoBehaviour
+{
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        // Enemy만 처리
+        if (!other.CompareTag("Enemy")) return;
+
+        // 맞은 적 제거
+        Destroy(other.gameObject);
+
+        // 총알 제거
+        Destroy(gameObject);
+    }
+}
