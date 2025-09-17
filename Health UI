@@ -1,0 +1,47 @@
+using UnityEngine;
+using TMPro;
+
+public class HealthUI : MonoBehaviour
+{
+    [Header("Refs")]
+    public PlayerHealth player;            // Player 오브젝트의 PlayerHealth 드래그
+    public TextMeshProUGUI hpText;         // Canvas의 HPText 드래그
+
+    void Start()
+    {
+        if (player == null)
+        {
+            // 태그로 자동 탐색(선택): Player에 PlayerHealth가 붙어있어야 함
+            var go = GameObject.FindGameObjectWithTag("Player");
+            if (go) player = go.GetComponent<PlayerHealth>();
+        }
+
+        if (player != null)
+        {
+            // 초기 표시
+            UpdateHP(player.Current, player.maxHealth);
+            // 이벤트 구독
+            player.OnHealthChanged += UpdateHP;
+            player.OnPlayerDied += OnPlayerDied;
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (player != null)
+        {
+            player.OnHealthChanged -= UpdateHP;
+            player.OnPlayerDied -= OnPlayerDied;
+        }
+    }
+
+    void UpdateHP(int current, int max)
+    {
+        if (hpText) hpText.text = $"HP {current}/{max}";
+    }
+
+    void OnPlayerDied()
+    {
+        if (hpText) hpText.text = "HP 0/0";
+    }
+}
