@@ -1,0 +1,85 @@
+using UnityEngine;
+using System;
+
+public class PlayerHealth : MonoBehaviour
+{
+    [Header("Health")]
+    [SerializeField] SpriteRenderer sprite;
+    [SerializeField] Color hitColor = Color.red;
+    [SerializeField] float flashTime = 0.1f;
+
+    public int maxHealth = 5;
+    public float invulnerableTime = 0.5f; // 맞은 직후 잠깐 무적
+
+    public int Current { get; private set; } // 현재 체력 읽기 전용
+    public event Action<int, int> OnHealthChanged; // (현재, 최대)
+    public event Action OnPlayerDied;
+
+    float lastHitTime = -999f;
+
+    void Awake()
+    {
+        Current = maxHealth;
+        OnHealthChanged?.Invoke(Current, maxHealth); // UI 등 초기 갱신용(연결했을 때)
+    }
+    void Start()
+    {
+        if (!sprite) sprite = GetComponentInChildren<SpriteRenderer>();
+    }
+
+    void Flash()
+    {
+        if (!sprite) return;
+        StopAllCoroutines();
+        StartCoroutine(FlashCo());
+    }
+
+    System.Collections.IEnumerator FlashCo()
+    {
+        var original = sprite.color;
+        sprite.color = hitColor;
+        yield return new WaitForSeconds(flashTime);
+        sprite.color = original;
+    }
+    public void Heal(int amount)
+    {
+        if (amount <= 0) return;
+        Current = Mathf.Clamp(Current + amount, 0, maxHealth);
+        OnHealthChanged?.Invoke(Current, maxHealth);
+    }
+
+    public void TakeDamage(int amount)
+    {
+        if (amount <= 0) return;
+
+        // 무적 시간 체크
+        if (Time.time - lastHitTime < invulnerableTime) return;
+        lastHitTime = Time.time;
+
+        Current = Mathf.Clamp(Current - amount, 0, maxHealth);
+        OnHealthChanged?.Invoke(Current, maxHealth);
+
+        Flash();
+
+        if (Current <= 0)
+        {
+            OnPlayerDied?.Invoke();
+            // 가장 단순한 처리: 플레이어 제거 (추후 게임오버 UI로 교체 가능)
+            Destroy(gameObject);
+        }
+    }
+
+    // 적과 "부딪히면" 1 데미지 (Enemy 콜라이더는 Trigger 꺼짐)
+    void OnCollisionEnter2D(Collision2D col)
+    {
+        if (col.collider.CompareTag("Enemy"))
+            TakeDamage(1);
+    }
+
+    // 적의 Trigger에 "들어갔다면" 1 데미지 (만약 Enemy 콜라이더가 Trigger일 때)
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Enemy"))
+            TakeDamage(1);
+    }
+}
